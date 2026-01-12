@@ -1,7 +1,17 @@
 node_modules
 
-
 # amplify
 .amplify
 amplify_outputs*
 amplifyconfiguration*
+
+# Sensitive credentials and secrets (NEVER COMMIT)
+scripts/SECRET_TO_PASTE.json
+scripts/aws-artifacts.json
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/settings.json
+.idea/

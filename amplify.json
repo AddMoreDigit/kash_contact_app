@@ -1,0 +1,7 @@
+{
+  "projectName": "kash_contact_app",
+  "version": "3.0",
+  "appId": "kashcontactapp",
+  "envName": "dev",
+  "defaultEditor": "vscode"
+}
