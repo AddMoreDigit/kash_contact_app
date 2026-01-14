@@ -1,253 +1,376 @@
 import { useState } from 'react';
-import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { Logo } from '../../components/layout';
 import { registerUser } from '../../../lib/auth';
 
-type Page = 'dashboard' | 'campaigns' | 'vouchers' | 'transactions' | 'profile' | 'overview' | 'draft' | 'howItWorks' | 'campaignDetail' | 'messaging' | 'serviceDetail' | 'selectedServices' | 'createCampaign' | 'manageCampaign' | 'contributors' | 'contributorDetail' | 'campaignSchedule' | 'campaignsHistory' | 'contribute' | 'individualCampaign' | 'groupCampaign' | 'managingCampaigns' | 'helpSupport' | 'saveDraft' | 'selectServices' | 'signup' | 'vendorSignup' | 'otpVerification' | 'signupSuccess' | 'login' | 'forgotPassword' | 'createNewPassword' | 'selectUserType';
+type Page = 'dashboard' | 'campaigns' | 'vouchers' | 'transactions' | 'profile' | 'overview' | 'draft' | 'howItWorks' | 'campaignDetail' | 'messaging' | 'serviceDetail' | 'selectedServices' | 'createCampaign' | 'manageCampaign' | 'contributors' | 'contributorDetail' | 'campaignSchedule' | 'campaignsHistory' | 'contribute' | 'individualCampaign' | 'groupCampaign' | 'managingCampaigns' | 'helpSupport' | 'saveDraft' | 'selectServices' | 'signup' | 'signupForm' | 'otpVerification' | 'signupSuccess' | 'login' | 'forgotPassword' | 'createNewPassword' | 'selectUserType';
 
 interface SignUpFormPageProps {
   onNavigate: (page: Page) => void;
-  accountType: 'user' | 'vendor' | 'corporate';
-  onSignUpComplete?: (email: string) => void;
+  onSignUp?: (userData: SignUpFormData) => void;
+  accountType?: 'user' | 'vendor' | 'corporate';
+  onCreateAccount?: (email: string) => void;
 }
 
-export function SignUpFormPage({ onNavigate, accountType, onSignUpComplete }: SignUpFormPageProps) {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
+export interface SignUpFormData {
+  businessName: string;
+  businessEmail: string;
+  password: string;
+  acceptedTerms: boolean;
+  accountType: 'user' | 'vendor' | 'corporate';
+}
+
+export function SignUpFormPage({ onNavigate, onSignUp, accountType = 'vendor', onCreateAccount }: SignUpFormPageProps) {
+  const [businessName, setBusinessName] = useState('');
+  const [businessEmail, setBusinessEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [errors, setErrors] = useState<{
+    businessName?: string;
+    businessEmail?: string;
+    password?: string;
+    terms?: string;
+  }>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  // Dynamic text based on account type
+  const getAccountTypeText = () => {
+    switch (accountType) {
+      case 'user':
+        return 'User';
+      case 'vendor':
+        return 'Vendor';
+      case 'corporate':
+        return 'Corporate';
+      default:
+        return 'Vendor';
+    }
+  };
+
+  const getNameFieldLabel = () => {
+    switch (accountType) {
+      case 'user':
+        return 'Full Name';
+      case 'vendor':
+        return 'Business Name';
+      case 'corporate':
+        return 'Company Name';
+      default:
+        return 'Business Name';
+    }
+  };
+
+  const getEmailFieldLabel = () => {
+    switch (accountType) {
+      case 'user':
+        return 'Email Address';
+      case 'vendor':
+        return 'Business Email Address';
+      case 'corporate':
+        return 'Corporate Email Address';
+      default:
+        return 'Business Email Address';
+    }
+  };
+
+  const getNamePlaceholder = () => {
+    switch (accountType) {
+      case 'user':
+        return 'Enter full name';
+      case 'vendor':
+        return 'Enter business name';
+      case 'corporate':
+        return 'Enter company name';
+      default:
+        return 'Enter business name';
+    }
+  };
+
+  const getEmailPlaceholder = () => {
+    switch (accountType) {
+      case 'user':
+        return 'Enter email address';
+      case 'vendor':
+        return 'Enter business email address';
+      case 'corporate':
+        return 'Enter corporate email address';
+      default:
+        return 'Enter business email address';
+    }
   };
 
   const validateForm = () => {
-    if (!formData.firstName.trim()) {
-      toast.error('Please enter your first name');
-      return false;
+    const newErrors: typeof errors = {};
+
+    if (!businessName.trim()) {
+      newErrors.businessName = `${getNameFieldLabel()} is required`;
     }
-    if (!formData.lastName.trim()) {
-      toast.error('Please enter your last name');
-      return false;
+
+    if (!businessEmail.trim()) {
+      newErrors.businessEmail = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(businessEmail)) {
+      newErrors.businessEmail = 'Please enter a valid email address';
     }
-    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      toast.error('Please enter a valid email address');
-      return false;
+
+    if (!password) {
+      newErrors.password = 'Password is required';
+    } else if (password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
     }
-    if (formData.password.length < 8) {
-      toast.error('Password must be at least 8 characters long');
-      return false;
+
+    if (!acceptedTerms) {
+      newErrors.terms = 'You must accept the policy and terms';
     }
-    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(formData.password)) {
-      toast.error('Password must contain uppercase, lowercase, number, and special character');
-      return false;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return false;
-    }
-    return true;
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
+  const handleSignUp = async () => {
+    if (validateForm()) {
+      setIsLoading(true);
 
-    setIsLoading(true);
+      try {
+        const result = await registerUser({
+          email: businessEmail,
+          password,
+          firstName: businessName.split(' ')[0] || 'User',
+          lastName: businessName.split(' ').slice(1).join(' ') || 'Account',
+          accountType,
+        });
 
-    try {
-      const result = await registerUser({
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        accountType,
-      });
+        if (result.success) {
+          toast.success('Account created successfully! Please verify your email.');
+          
+          // Store email for OTP verification
+          localStorage.setItem('pendingVerificationEmail', businessEmail);
+          
+          if (onCreateAccount) {
+            onCreateAccount(businessEmail);
+          }
 
-      if (result.success) {
-        toast.success('Account created successfully! Please check your email for verification code.');
-        if (onSignUpComplete) {
-          onSignUpComplete(formData.email);
+          // Navigate to OTP verification
+          setTimeout(() => {
+            onNavigate('otpVerification');
+          }, 1000);
+        } else {
+          toast.error(result.error || 'Failed to create account');
         }
-        onNavigate('otpVerification');
-      } else {
-        toast.error(result.error || 'Failed to create account');
+      } catch (error) {
+        toast.error('An unexpected error occurred');
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      toast.error('An unexpected error occurred');
-    } finally {
-      setIsLoading(false);
+    } else {
+      toast.error('Please fix the errors in the form');
     }
   };
 
-  const getAccountTypeLabel = () => {
-    switch (accountType) {
-      case 'user': return 'User';
-      case 'vendor': return 'Vendor';
-      case 'corporate': return 'Corporate';
-    }
+  const handleBack = () => {
+    onNavigate('signup');
   };
 
   return (
     <div className="bg-white flex w-full min-h-screen">
-      {/* Left Section */}
+      {/* Left Section - Purple Background */}
       <div className="w-[49%] bg-[#E5DEFF] relative flex flex-col py-8 px-12">
+        {/* Back Button */}
         <button
-          onClick={() => onNavigate('signup')}
+          onClick={handleBack}
           className="flex items-center gap-2 mb-12 hover:opacity-80 transition-opacity"
         >
           <div className="w-9 h-9 rounded-full border border-black flex items-center justify-center">
-            <ArrowLeft size={20} />
+            <svg
+              width="10"
+              height="18"
+              viewBox="0 0 10 18"
+              fill="none"
+            >
+              <path
+                d="M9 1L1 9L9 17"
+                stroke="black"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
           <span className="text-black text-base">back</span>
         </button>
 
+        {/* Black Panel */}
         <div className="bg-black flex-1 flex flex-col justify-center px-12 rounded-lg">
-          <h1 className="text-white text-4xl mb-4">Welcome</h1>
-          <h2 className="text-white text-6xl mb-6">Join as {getAccountTypeLabel()}</h2>
+          <h1 className="text-white text-4xl mb-4">Hi</h1>
+          <h2 className="text-white text-6xl mb-6">Sign up</h2>
           <p className="text-white text-lg">
-            Fill in your details to create your account
+            Please continue signing up as {getAccountTypeText()}
           </p>
         </div>
       </div>
 
-      {/* Right Section - Form */}
-      <div className="w-[51%] bg-white flex flex-col items-center py-12 px-16 overflow-auto">
-        <div className="mb-8">
+      {/* Right Section - White Background */}
+      <div className="w-[51%] bg-white flex flex-col items-center py-12 px-16 pb-32 relative overflow-hidden">
+        {/* Logo */}
+        <div className="mb-12">
           <Logo className="h-10" />
         </div>
 
+        {/* Form */}
         <div className="w-full max-w-md">
-          <h2 className="text-3xl text-black mb-2 text-center">Create Account</h2>
-          <p className="text-gray-600 mb-8 text-center">Sign up as {getAccountTypeLabel()}</p>
+          <h2 className="text-3xl text-black mb-8 text-center">
+            Create Account
+          </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:border-[#8363F2]"
-                  placeholder="John"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:border-[#8363F2]"
-                  placeholder="Doe"
-                  required
-                />
-              </div>
-            </div>
+          {/* Business Name */}
+          <div className="mb-6">
+            <label className="text-sm text-gray-700 mb-2 block">
+              {getNameFieldLabel()} <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={businessName}
+              onChange={(e) => {
+                setBusinessName(e.target.value);
+                if (errors.businessName) {
+                  setErrors({ ...errors, businessName: undefined });
+                }
+              }}
+              placeholder={getNamePlaceholder()}
+              className="w-full px-4 py-3 border border-gray-400 rounded-md text-sm outline-none focus:border-[#8363f2] transition-colors"
+            />
+            {errors.businessName && (
+              <p className="text-red-500 text-xs mt-1">{errors.businessName}</p>
+            )}
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address
-              </label>
+          {/* Business Email */}
+          <div className="mb-6">
+            <label className="text-sm text-gray-700 mb-2 block">
+              {getEmailFieldLabel()} <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              value={businessEmail}
+              onChange={(e) => {
+                setBusinessEmail(e.target.value);
+                if (errors.businessEmail) {
+                  setErrors({ ...errors, businessEmail: undefined });
+                }
+              }}
+              placeholder={getEmailPlaceholder()}
+              className="w-full px-4 py-3 border border-gray-400 rounded-md text-sm outline-none focus:border-[#8363f2] transition-colors"
+            />
+            {errors.businessEmail && (
+              <p className="text-red-500 text-xs mt-1">{errors.businessEmail}</p>
+            )}
+          </div>
+
+          {/* Password */}
+          <div className="mb-6">
+            <label className="text-sm text-gray-700 mb-2 block">
+              Password <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
               <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:border-[#8363F2]"
-                placeholder="john.doe@example.com"
-                required
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) {
+                    setErrors({ ...errors, password: undefined });
+                  }
+                }}
+                placeholder="Enter password"
+                className="w-full px-4 py-3 border border-gray-400 rounded-md text-sm outline-none focus:border-[#8363f2] transition-colors pr-12"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 hover:opacity-70 transition-opacity"
+              >
+                {showPassword ? (
+                  <EyeOff size={18} className="text-gray-600" />
+                ) : (
+                  <Eye size={18} className="text-gray-600" />
+                )}
+              </button>
             </div>
+            {errors.password && (
+              <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+            )}
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:border-[#8363F2] pr-12"
-                  placeholder="••••••••"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Min 8 characters, uppercase, lowercase, number, and special character
-              </p>
-            </div>
+          {/* Terms Checkbox */}
+          <div className="mb-6 flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="terms"
+              checked={acceptedTerms}
+              onChange={(e) => {
+                setAcceptedTerms(e.target.checked);
+                if (errors.terms) {
+                  setErrors({ ...errors, terms: undefined });
+                }
+              }}
+              className="w-4 h-4 mt-0.5 accent-[#8363f2] cursor-pointer"
+            />
+            <label htmlFor="terms" className="text-sm text-gray-700 cursor-pointer">
+              I accept the policy and terms
+            </label>
+          </div>
+          {errors.terms && (
+            <p className="text-red-500 text-xs -mt-4 mb-4">{errors.terms}</p>
+          )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:border-[#8363F2] pr-12"
-                  placeholder="••••••••"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
-                >
-                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-            </div>
+          {/* Sign Up Button */}
+          <button
+            onClick={handleSignUp}
+            disabled={isLoading}
+            className="w-full bg-[#8363f2] text-white py-3 rounded-md text-base text-center hover:bg-[#7354e1] transition-colors mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Creating Account...' : 'Sign Up'}
+          </button>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-[#8363F2] text-white py-3 rounded-xl hover:bg-[#7954FB] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium mt-6"
-            >
-              {isLoading ? 'Creating Account...' : 'Sign Up'}
-            </button>
-          </form>
-
-          <p className="text-center text-sm text-gray-600 mt-6">
+          {/* Login Link */}
+          <p className="text-center text-sm text-gray-600">
             Already have an account?{' '}
             <button
               onClick={() => onNavigate('login')}
-              className="text-[#8363f2] underline hover:opacity-80"
+              className="text-[#8363f2] underline hover:opacity-80 transition-opacity"
             >
               Login here
             </button>
           </p>
+        </div>
+
+        {/* Purple Gradient Bottom Right */}
+        <div className="absolute bottom-0 right-0 w-full h-64 pointer-events-none overflow-hidden">
+          <svg
+            viewBox="0 0 624 330"
+            fill="none"
+            className="absolute -bottom-10 -right-20 w-[800px] h-auto"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M4 400.181C4 364.45 27.6277 333.026 61.953 323.103L132 302.855L272.5 260.855L1257.13 4.98589C1310.06 -8.76888 1366.32 6.38745 1405.18 44.8692L1439.55 78.9141C1442.4 81.7313 1444 85.5687 1444 89.5723V508.355H4V400.181Z"
+              fill="url(#gradient)"
+            />
+            <defs>
+              <linearGradient
+                id="gradient"
+                x1="4"
+                y1="268"
+                x2="1444"
+                y2="268"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0.474" stopColor="#7954FB" />
+                <stop offset="1" stopColor="#2D1B69" />
+              </linearGradient>
+            </defs>
+          </svg>
         </div>
       </div>
     </div>

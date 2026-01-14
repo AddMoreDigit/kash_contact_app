@@ -10,7 +10,6 @@ import { OverviewPage as CorporateOverviewPage } from "./src/pages/corporate/Ove
 import { SelectUserTypePage } from "./src/pages/auth/SelectUserTypePage";
 import { SignUpPage } from "./src/pages/auth/SignUpPage";
 import { SignUpFormPage } from "./src/pages/auth/SignUpFormPage";
-import { VendorSignUpPage } from "./src/pages/auth/VendorSignUpPage";
 import { OTPVerificationPage } from "./src/pages/auth/OTPVerificationPage";
 import { SignUpSuccessPage } from "./src/pages/auth/SignUpSuccessPage";
 import { LoginPage } from "./src/pages/auth/LoginPage";
@@ -70,7 +69,6 @@ type Page =
   | "selectUserType"
   | "signup"
   | "signupForm"
-  | "vendorSignup"
   | "otpVerification"
   | "signupSuccess"
   | "login"
@@ -151,7 +149,7 @@ function App() {
     // Auth pages
     selectUserType: "auth",
     signup: "auth",
-    vendorSignup: "auth",
+    signupForm: "auth",
     otpVerification: "auth",
     signupSuccess: "auth",
     login: "auth",
@@ -235,7 +233,7 @@ function App() {
     // Track if we're entering password reset flow
     if (page === 'forgotPassword') {
       setIsPasswordResetFlow(true);
-    } else if (page === 'login' || page === 'vendorSignup') {
+    } else if (page === 'login' || page === 'signup') {
       setIsPasswordResetFlow(false);
     }
     setCurrentPage(page);
@@ -247,7 +245,7 @@ function App() {
 
   const handleSignUp = (type: "user" | "vendor" | "corporate") => {
     setAccountType(type);
-    handleNavigate('vendorSignup');
+    handleNavigate('signupForm');
   };
 
   const handleSignUpComplete = (email: string) => {
@@ -305,14 +303,6 @@ function App() {
       case "signupForm":
         return (
           <SignUpFormPage
-            onNavigate={handleNavigate}
-            accountType={accountType}
-            onSignUpComplete={handleSignUpComplete}
-          />
-        );
-      case "vendorSignup":
-        return (
-          <VendorSignUpPage
             onNavigate={handleNavigate}
             accountType={accountType}
             onCreateAccount={handleCreateAccount}
