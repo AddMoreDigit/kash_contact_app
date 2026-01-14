@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { Logo } from '../../components/layout';
+import { registerUser } from '../../../lib/auth';
 
 type Page = 'dashboard' | 'campaigns' | 'vouchers' | 'transactions' | 'profile' | 'overview' | 'draft' | 'howItWorks' | 'campaignDetail' | 'messaging' | 'serviceDetail' | 'selectedServices' | 'createCampaign' | 'manageCampaign' | 'contributors' | 'contributorDetail' | 'campaignSchedule' | 'campaignsHistory' | 'contribute' | 'individualCampaign' | 'groupCampaign' | 'managingCampaigns' | 'helpSupport' | 'saveDraft' | 'selectServices' | 'signup' | 'vendorSignup' | 'otpVerification' | 'signupSuccess' | 'login' | 'forgotPassword' | 'createNewPassword' | 'selectUserType';
 
@@ -32,6 +33,7 @@ export function VendorSignUpPage({ onNavigate, onSignUp, accountType = 'vendor',
     password?: string;
     terms?: string;
   }>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   // Dynamic text based on account type
   const getAccountTypeText = () => {
@@ -126,28 +128,40 @@ export function VendorSignUpPage({ onNavigate, onSignUp, accountType = 'vendor',
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
     if (validateForm()) {
-      const userData: VendorSignUpData = {
-        businessName,
-        businessEmail,
-        password,
-        acceptedTerms,
-        accountType,
-      };
+      setIsLoading(true);
 
-      if (onSignUp) {
-        onSignUp(userData);
-      }
+      try {
+        const result = await registerUser({
+          email: businessEmail,
+          password,
+          firstName: businessName.split(' ')[0] || 'User',
+          lastName: businessName.split(' ').slice(1).join(' ') || 'Account',
+          accountType,
+        });
 
-      toast.success('Account created successfully! Please verify your email.');
-      // Navigate to OTP verification
-      setTimeout(() => {
-        onNavigate('otpVerification');
-      }, 1000);
+        if (result.success) {
+          toast.success('Account created successfully! Please verify your email.');
+          
+          // Store email for OTP verification
+          localStorage.setItem('pendingVerificationEmail', businessEmail);
+          
+          if (onCreateAccount) {
+            onCreateAccount(businessEmail);
+          }
 
-      if (onCreateAccount) {
-        onCreateAccount(businessEmail);
+          // Navigate to OTP verification
+          setTimeout(() => {
+            onNavigate('otpVerification');
+          }, 1000);
+        } else {
+          toast.error(result.error || 'Failed to create account');
+        }
+      } catch (error) {
+        toast.error('An unexpected error occurred');
+      } finally {
+        setIsLoading(false);
       }
     } else {
       toast.error('Please fix the errors in the form');
@@ -313,7 +327,10 @@ export function VendorSignUpPage({ onNavigate, onSignUp, accountType = 'vendor',
           {/* Sign Up Button */}
           <button
             onClick={handleSignUp}
-            className="w-full bg-[#8363f2] text-white py-3 rounded-md text-base text-center hover:bg-[#7354e1] transition-colors mb-6"
+            disabled={isLoading}
+            className="w-full bg-[#8363f2] text-white py-3 rounded-md text-base text-center hover:bg-[#7354e1] transition-colors mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Creating Account...' : 'Sign Up'}
           >
             Sign Up
           </button>

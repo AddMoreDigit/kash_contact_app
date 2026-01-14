@@ -247,7 +247,7 @@ function App() {
 
   const handleSignUp = (type: "user" | "vendor" | "corporate") => {
     setAccountType(type);
-    handleNavigate('signupForm');
+    handleNavigate('vendorSignup');
   };
 
   const handleSignUpComplete = (email: string) => {
@@ -299,9 +299,7 @@ function App() {
         return (
           <SignUpPage
             onNavigate={handleNavigate}
-            onSelectAccountType={(type) => {
-              setAccountType(type);
-            }}
+            onSignUp={handleSignUp}
           />
         );
       case "signupForm":
