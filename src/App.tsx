@@ -299,7 +299,9 @@ function App() {
         return (
           <SignUpPage
             onNavigate={handleNavigate}
-            onSignUp={handleSignUp}
+            onSelectAccountType={(type) => {
+              setAccountType(type);
+            }}
           />
         );
       case "signupForm":

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { User, Store, Building2, ChevronRight } from 'lucide-react';
 import { Logo } from '../../components/layout';
 
@@ -6,19 +5,18 @@ type Page = 'dashboard' | 'campaigns' | 'vouchers' | 'transactions' | 'profile' 
 
 interface SignUpPageProps {
   onNavigate: (page: Page) => void;
-  onSignUp?: (accountType: 'user' | 'vendor' | 'corporate') => void;
+  onSelectAccountType?: (type: 'user' | 'vendor' | 'corporate') => void;
 }
 
-export function SignUpPage({ onNavigate, onSignUp }: SignUpPageProps) {
-  const [selectedType, setSelectedType] = useState<'user' | 'vendor' | 'corporate' | null>(null);
-
+export function SignUpPage({ onNavigate, onSelectAccountType }: SignUpPageProps) {
   const handleSelectType = (type: 'user' | 'vendor' | 'corporate') => {
-    setSelectedType(type);
-    // Navigate to detailed signup page for all account types
+    // Call the callback to set account type in parent
+    if (onSelectAccountType) {
+      onSelectAccountType(type);
+    }
+    // Navigate to signup form
     setTimeout(() => {
-      if (onSignUp) {
-        onSignUp(type);
-      }
+      onNavigate('signupForm');
     }, 300);
   };
 
