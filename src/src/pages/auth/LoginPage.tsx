@@ -125,7 +125,6 @@ export function LoginPage({
     } finally {
       setIsLoading(false);
     }
-  };}, 1000);
   };
 
   const handleBack = () => {
