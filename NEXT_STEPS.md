@@ -26,6 +26,36 @@ Your RDS PostgreSQL instance is **created and backing up**:
 
 ---
 
+## 🧩 Frontend Auth API Configuration
+
+The signup/OTP flow now calls the backend HTTP API (Lambda + RDS + SES) instead of Cognito for registration and email verification. Configure the API base URL in one of these ways:
+
+1) Preferred: Set an environment variable in your environments
+- Local dev: create `.env.local` with:
+  
+   ```bash
+   VITE_AUTH_API_URL=https://<your-api-id>.execute-api.us-east-1.amazonaws.com
+   ```
+
+- Amplify Hosting (Console): App settings → Environment variables → Add
+   - Key: `VITE_AUTH_API_URL`
+   - Value: `https://<your-api-id>.execute-api.us-east-1.amazonaws.com`
+
+2) Alternative: Populate `public/amplify_outputs.json`
+- Set the top-level `http_api_url` property to your API URL.
+
+Where to find the API URL:
+- Amplify Gen2 creates an HTTP API (API Gateway v2). In AWS Console, go to API Gateway → APIs → find the HTTP API created by Amplify (look for routes like `/auth/register`) and copy its Invoke URL.
+
+Once set, the frontend will:
+- POST `/auth/register` to create the user in Postgres and send OTP via SES
+- POST `/auth/verify-email` to verify OTP and activate the user
+- POST `/auth/resend-otp` to resend the OTP
+
+No code changes are required after setting the URL.
+
+---
+
 ## 🚨 CRITICAL: 3 Actions Required Before Deployment
 
 ### 1️⃣ Update Secrets Manager with RDS Connection Details

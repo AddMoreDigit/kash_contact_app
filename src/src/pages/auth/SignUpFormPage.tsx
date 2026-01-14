@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { Logo } from '../../components/layout';
-import { registerUser } from '../../../lib/auth';
+import { registerUserViaApi } from '../../../lib/auth';
 
 type Page = 'dashboard' | 'campaigns' | 'vouchers' | 'transactions' | 'profile' | 'overview' | 'draft' | 'howItWorks' | 'campaignDetail' | 'messaging' | 'serviceDetail' | 'selectedServices' | 'createCampaign' | 'manageCampaign' | 'contributors' | 'contributorDetail' | 'campaignSchedule' | 'campaignsHistory' | 'contribute' | 'individualCampaign' | 'groupCampaign' | 'managingCampaigns' | 'helpSupport' | 'saveDraft' | 'selectServices' | 'signup' | 'signupForm' | 'otpVerification' | 'signupSuccess' | 'login' | 'forgotPassword' | 'createNewPassword' | 'selectUserType';
 
@@ -133,7 +133,7 @@ export function SignUpFormPage({ onNavigate, onSignUp, accountType = 'vendor', o
       setIsLoading(true);
 
       try {
-        const result = await registerUser({
+        const result = await registerUserViaApi({
           email: businessEmail,
           password,
           firstName: businessName.split(' ')[0] || 'User',

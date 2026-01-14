@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Logo } from '../../components/layout';
 import svgPaths from '../../../imports/svg-ft8b2375je';
-import { verifyEmail } from '../../../lib/auth';
+import { verifyEmailViaApi, resendOtpViaApi } from '../../../lib/auth';
 
-type Page = 'dashboard' | 'campaigns' | 'vouchers' | 'transactions' | 'profile' | 'overview' | 'draft' | 'howItWorks' | 'campaignDetail' | 'messaging' | 'serviceDetail' | 'selectedServices' | 'createCampaign' | 'manageCampaign' | 'contributors' | 'contributorDetail' | 'campaignSchedule' | 'campaignsHistory' | 'contribute' | 'individualCampaign' | 'groupCampaign' | 'managingCampaigns' | 'helpSupport' | 'saveDraft' | 'selectServices' | 'signup' | 'vendorSignup' | 'otpVerification' | 'signupSuccess' | 'login' | 'forgotPassword' | 'createNewPassword' | 'vendorDashboard' | 'corporateDashboard' | 'selectUserType';
+type Page = 'dashboard' | 'campaigns' | 'vouchers' | 'transactions' | 'profile' | 'overview' | 'draft' | 'howItWorks' | 'campaignDetail' | 'messaging' | 'serviceDetail' | 'selectedServices' | 'createCampaign' | 'manageCampaign' | 'contributors' | 'contributorDetail' | 'campaignSchedule' | 'campaignsHistory' | 'contribute' | 'individualCampaign' | 'groupCampaign' | 'managingCampaigns' | 'helpSupport' | 'saveDraft' | 'selectServices' | 'signup' | 'signupForm' | 'otpVerification' | 'signupSuccess' | 'login' | 'forgotPassword' | 'createNewPassword' | 'vendorDashboard' | 'corporateDashboard' | 'selectUserType';
 
 interface OTPVerificationPageProps {
   onNavigate: (page: Page) => void;
@@ -85,8 +85,7 @@ export function OTPVerificationPage({ onNavigate, isSignupFlow = true, accountTy
 
     try {
       const email = localStorage.getItem('pendingVerificationEmail') || userEmail.replace(/\*/g, '');
-      
-      const result = await verifyEmail(email, otpValue);
+      const result = await verifyEmailViaApi(email, otpValue);
       
       if (result.success) {
         toast.success('Email verified successfully!');
@@ -109,16 +108,26 @@ export function OTPVerificationPage({ onNavigate, isSignupFlow = true, accountTy
     }
   };
 
-  const handleRetry = () => {
-    setOtp(['', '', '', '', '']);
-    setTimer(59);
-    inputRefs.current[0]?.focus();
-    toast.success('A new code has been sent to your email');
+  const handleRetry = async () => {
+    const email = localStorage.getItem('pendingVerificationEmail') || userEmail.replace(/\*/g, '');
+    if (!email) {
+      toast.error('Missing email for resend');
+      return;
+    }
+    const result = await resendOtpViaApi(email);
+    if (result.success) {
+      setOtp(['', '', '', '', '', '']);
+      setTimer(59);
+      inputRefs.current[0]?.focus();
+      toast.success('A new code has been sent to your email');
+    } else {
+      toast.error(result.error || 'Failed to resend code');
+    }
   };
 
   const handleBack = () => {
     if (isSignupFlow) {
-      onNavigate('vendorSignup');
+      onNavigate('signupForm');
     } else {
       onNavigate('forgotPassword');
     }
@@ -251,7 +260,7 @@ export function OTPVerificationPage({ onNavigate, isSignupFlow = true, accountTy
         <div className="bg-black flex-1 flex flex-col justify-center px-12 rounded-lg">
           <h1 className="text-white text-6xl mb-6">Verification</h1>
           <p className="text-white text-lg">
-            Please enter the 5 digits sent to your email.
+            Please enter the 6 digits sent to your email.
           </p>
         </div>
       </div>

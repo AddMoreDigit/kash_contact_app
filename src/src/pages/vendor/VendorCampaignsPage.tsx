@@ -9,7 +9,7 @@ type Page =
   | "howItWorks" | "campaignDetail" | "viewCampaignDetail" | "messaging" | "serviceDetail" 
   | "selectedServices" | "createCampaign" | "manageCampaign" | "contributors" | "contributorDetail" 
   | "campaignSchedule" | "campaignsHistory" | "contribute" | "individualCampaign" | "groupCampaign" 
-  | "managingCampaigns" | "helpSupport" | "selectServices" | "signup" | "vendorSignup" 
+  | "managingCampaigns" | "helpSupport" | "selectServices" | "signup" | "signupForm" 
   | "otpVerification" | "signupSuccess" | "login" | "forgotPassword" | "createNewPassword" 
   | "vendorDashboard" | "corporateDashboard" | "corporateCampaigns" | "corporateProfile" 
   | "corporateTransactions" | "corporateDrafts" | "addMembers" | "campaignTransactions" 

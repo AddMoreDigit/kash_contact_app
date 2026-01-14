@@ -31,7 +31,7 @@ type Page =
   | "saveDraft"
   | "selectServices"
   | "signup"
-  | "vendorSignup"
+  | "signupForm"
   | "otpVerification"
   | "signupSuccess"
   | "login"

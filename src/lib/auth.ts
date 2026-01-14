@@ -113,3 +113,83 @@ export async function logoutUser() {
     };
   }
 }
+
+/**
+ * Backend API helpers (RDS + SES OTP flow)
+ */
+
+async function getApiBaseUrl(): Promise<string> {
+  // Prefer environment variable
+  const envUrl = (import.meta as any).env?.VITE_AUTH_API_URL;
+  if (envUrl) return envUrl as string;
+
+  // Fall back to amplify_outputs.json if it contains http_api_url
+  try {
+    const res = await fetch('/amplify_outputs.json');
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.http_api_url) return json.http_api_url as string;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  throw new Error('Auth API base URL not configured. Set VITE_AUTH_API_URL or add http_api_url to amplify_outputs.json.');
+}
+
+export async function registerUserViaApi({ email, password, firstName, lastName, accountType }: SignUpParams) {
+  try {
+    const base = await getApiBaseUrl();
+    const res = await fetch(`${base}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, firstName, lastName, userType: accountType }),
+    });
+    const data = await res.json().catch(() => ({ success: false, message: 'Invalid response' }));
+    if (!res.ok || !data.success) {
+      return { success: false, error: data.message || 'Failed to register' };
+    }
+    return { success: true };
+  } catch (error: any) {
+    console.error('API register error:', error);
+    return { success: false, error: error.message || 'Failed to register' };
+  }
+}
+
+export async function verifyEmailViaApi(email: string, code: string) {
+  try {
+    const base = await getApiBaseUrl();
+    const res = await fetch(`${base}/auth/verify-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otpCode: code }),
+    });
+    const data = await res.json().catch(() => ({ success: false, message: 'Invalid response' }));
+    if (!res.ok || !data.success) {
+      return { success: false, error: data.message || 'Failed to verify email' };
+    }
+    return { success: true };
+  } catch (error: any) {
+    console.error('API verify error:', error);
+    return { success: false, error: error.message || 'Failed to verify email' };
+  }
+}
+
+export async function resendOtpViaApi(email: string) {
+  try {
+    const base = await getApiBaseUrl();
+    const res = await fetch(`${base}/auth/resend-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json().catch(() => ({ success: false, message: 'Invalid response' }));
+    if (!res.ok || !data.success) {
+      return { success: false, error: data.message || 'Failed to resend code' };
+    }
+    return { success: true };
+  } catch (error: any) {
+    console.error('API resend error:', error);
+    return { success: false, error: error.message || 'Failed to resend code' };
+  }
+}

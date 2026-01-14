@@ -36,6 +36,11 @@ export const api = {
         method: 'POST',
         function: 'auth',
       },
+      {
+        path: '/auth/resend-otp',
+        method: 'POST',
+        function: 'auth',
+      },
     ],
   },
 };

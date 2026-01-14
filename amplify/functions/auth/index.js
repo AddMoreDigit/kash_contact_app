@@ -173,6 +173,35 @@ async function loginUser(data) {
   }
 }
 
+async function resendOtp(data) {
+  const { email } = data;
+  if (!email) return { statusCode: 400, body: JSON.stringify({ success: false, message: 'Missing email' }) };
+  const client = await getDbClient();
+  try {
+    const res = await client.query('SELECT id, email_verified FROM users WHERE email = $1', [email]);
+    if (res.rowCount === 0) {
+      await client.end();
+      return { statusCode: 404, body: JSON.stringify({ success: false, message: 'User not found' }) };
+    }
+    const user = res.rows[0];
+    if (user.email_verified) {
+      await client.end();
+      return { statusCode: 400, body: JSON.stringify({ success: false, message: 'Email already verified' }) };
+    }
+
+    const otp = generateOtp();
+    const otpExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await client.query('UPDATE users SET otp_code = $1, otp_expires_at = $2, status = $3 WHERE id = $4', [otp, otpExpires, 'pending_verification', user.id]);
+    await sendVerificationEmail(email, otp);
+    await client.end();
+    return { statusCode: 200, body: JSON.stringify({ success: true, message: 'Verification code resent' }) };
+  } catch (err) {
+    console.error('resendOtp error', err);
+    try { await client.end(); } catch (e) {}
+    return { statusCode: 500, body: JSON.stringify({ success: false, message: err.message }) };
+  }
+}
+
 exports.handler = async (event) => {
   // Support both API Gateway v1 (event.path/event.httpMethod) and HTTP API (requestContext.http)
   const path = event.path || (event.requestContext && event.requestContext.http && event.requestContext.http.path) || '/';
@@ -184,6 +213,7 @@ exports.handler = async (event) => {
     if (method === 'POST' && path.endsWith('/auth/register')) return await registerUser(body);
     if (method === 'POST' && path.endsWith('/auth/verify-email')) return await verifyEmail(body);
     if (method === 'POST' && path.endsWith('/auth/login')) return await loginUser(body);
+    if (method === 'POST' && path.endsWith('/auth/resend-otp')) return await resendOtp(body);
 
     return { statusCode: 404, body: JSON.stringify({ success: false, message: 'Not found' }) };
   } catch (err) {
