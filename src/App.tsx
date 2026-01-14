@@ -9,7 +9,7 @@ import { OverviewPage } from "./src/pages/user/OverviewPage";
 import { OverviewPage as CorporateOverviewPage } from "./src/pages/corporate/OverviewPage";
 import { SelectUserTypePage } from "./src/pages/auth/SelectUserTypePage";
 import { SignUpPage } from "./src/pages/auth/SignUpPage";
-import { VendorSignUpPage } from "./src/pages/auth/VendorSignUpPage";
+import { SignUpFormPage } from "./src/pages/auth/SignUpFormPage";
 import { OTPVerificationPage } from "./src/pages/auth/OTPVerificationPage";
 import { SignUpSuccessPage } from "./src/pages/auth/SignUpSuccessPage";
 import { LoginPage } from "./src/pages/auth/LoginPage";
@@ -68,7 +68,7 @@ type Page =
   // Auth pages
   | "selectUserType"
   | "signup"
-  | "vendorSignup"
+  | "signupForm"
   | "otpVerification"
   | "signupSuccess"
   | "login"
@@ -149,7 +149,7 @@ function App() {
     // Auth pages
     selectUserType: "auth",
     signup: "auth",
-    vendorSignup: "auth",
+    signupForm: "auth",
     otpVerification: "auth",
     signupSuccess: "auth",
     login: "auth",
@@ -233,7 +233,7 @@ function App() {
     // Track if we're entering password reset flow
     if (page === 'forgotPassword') {
       setIsPasswordResetFlow(true);
-    } else if (page === 'login' || page === 'vendorSignup') {
+    } else if (page === 'login' || page === 'signup') {
       setIsPasswordResetFlow(false);
     }
     setCurrentPage(page);
@@ -245,7 +245,12 @@ function App() {
 
   const handleSignUp = (type: "user" | "vendor" | "corporate") => {
     setAccountType(type);
-    handleNavigate('vendorSignup');
+    handleNavigate('signupForm');
+  };
+
+  const handleSignUpComplete = (email: string) => {
+    setUserEmail(email);
+    localStorage.setItem('pendingVerificationEmail', email);
   };
 
   const handleCreateAccount = (email: string) => {
@@ -295,9 +300,9 @@ function App() {
             onSignUp={handleSignUp}
           />
         );
-      case "vendorSignup":
+      case "signupForm":
         return (
-          <VendorSignUpPage
+          <SignUpFormPage
             onNavigate={handleNavigate}
             accountType={accountType}
             onCreateAccount={handleCreateAccount}

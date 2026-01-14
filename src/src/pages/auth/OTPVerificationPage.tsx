@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Logo } from '../../components/layout';
 import svgPaths from '../../../imports/svg-ft8b2375je';
+import { verifyEmail } from '../../../lib/auth';
 
 type Page = 'dashboard' | 'campaigns' | 'vouchers' | 'transactions' | 'profile' | 'overview' | 'draft' | 'howItWorks' | 'campaignDetail' | 'messaging' | 'serviceDetail' | 'selectedServices' | 'createCampaign' | 'manageCampaign' | 'contributors' | 'contributorDetail' | 'campaignSchedule' | 'campaignsHistory' | 'contribute' | 'individualCampaign' | 'groupCampaign' | 'managingCampaigns' | 'helpSupport' | 'saveDraft' | 'selectServices' | 'signup' | 'vendorSignup' | 'otpVerification' | 'signupSuccess' | 'login' | 'forgotPassword' | 'createNewPassword' | 'vendorDashboard' | 'corporateDashboard' | 'selectUserType';
 
@@ -13,8 +14,9 @@ interface OTPVerificationPageProps {
 }
 
 export function OTPVerificationPage({ onNavigate, isSignupFlow = true, accountType = 'user', userEmail = 'john*********@gmail.com' }: OTPVerificationPageProps) {
-  const [otp, setOtp] = useState(['', '', '', '', '']);
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(59); // 59 seconds countdown
+  const [isLoading, setIsLoading] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -44,7 +46,7 @@ export function OTPVerificationPage({ onNavigate, isSignupFlow = true, accountTy
     setOtp(newOtp);
 
     // Auto-focus next input
-    if (value && index < 4) {
+    if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   };
@@ -57,40 +59,54 @@ export function OTPVerificationPage({ onNavigate, isSignupFlow = true, accountTy
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').slice(0, 5);
+    const pastedData = e.clipboardData.getData('text').slice(0, 6);
     if (!/^\d+$/.test(pastedData)) return;
 
     const newOtp = [...otp];
     pastedData.split('').forEach((char, index) => {
-      if (index < 5) newOtp[index] = char;
+      if (index < 6) newOtp[index] = char;
     });
     setOtp(newOtp);
 
     // Focus the last filled input or the next empty one
-    const nextIndex = Math.min(pastedData.length, 4);
+    const nextIndex = Math.min(pastedData.length, 5);
     inputRefs.current[nextIndex]?.focus();
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     const otpValue = otp.join('');
     
-    if (otpValue.length !== 5) {
-      toast.error('Please enter all 5 digits');
+    if (otpValue.length !== 6) {
+      toast.error('Please enter all 6 digits');
       return;
     }
 
-    // Simulate verification
-    toast.success('OTP verified successfully!');
-    
-    setTimeout(() => {
-      if (isSignupFlow) {
-        // Navigate to success page after signup OTP verification
-        onNavigate('signupSuccess');
+    setIsLoading(true);
+
+    try {
+      const email = localStorage.getItem('pendingVerificationEmail') || userEmail.replace(/\*/g, '');
+      
+      const result = await verifyEmail(email, otpValue);
+      
+      if (result.success) {
+        toast.success('Email verified successfully!');
+        localStorage.removeItem('pendingVerificationEmail');
+        
+        setTimeout(() => {
+          if (isSignupFlow) {
+            onNavigate('signupSuccess');
+          } else {
+            onNavigate('createNewPassword');
+          }
+        }, 1000);
       } else {
-        // Password reset flow
-        onNavigate('createNewPassword');
+        toast.error(result.error || 'Invalid verification code');
       }
-    }, 1000);
+    } catch (error) {
+      toast.error('Verification failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRetry = () => {

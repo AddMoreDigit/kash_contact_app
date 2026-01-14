@@ -1,0 +1,14 @@
+{
+  "name": "amplify-auth-function",
+  "version": "0.1.0",
+  "description": "Auth Lambda for Kash Contact - register, verify email, login",
+  "main": "index.js",
+  "type": "commonjs",
+  "dependencies": {
+    "pg": "^8.11.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.0",
+    "@aws-sdk/client-secrets-manager": "^3.400.0",
+    "@aws-sdk/client-ses": "^3.400.0"
+  }
+}
