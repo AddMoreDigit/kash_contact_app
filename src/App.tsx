@@ -318,16 +318,6 @@ function App() {
             onCreateAccount={handleCreateAccount}
           />
         );
-          />
-        );
-      case "vendorSignup":
-        return (
-          <VendorSignUpPage
-            onNavigate={handleNavigate}
-            accountType={accountType}
-            onCreateAccount={handleCreateAccount}
-          />
-        );
       case "otpVerification":
         return (
           <OTPVerificationPage
