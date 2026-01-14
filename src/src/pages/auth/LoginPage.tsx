@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "../../components/layout";
-import { loginUser } from "../../lib/auth";
+import { loginUser } from "../../../lib/auth";
 
 type Page =
   | "dashboard"

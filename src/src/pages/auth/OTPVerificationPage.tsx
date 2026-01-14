@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Logo } from '../../components/layout';
 import svgPaths from '../../../imports/svg-ft8b2375je';
-import { verifyEmail } from '../../lib/auth';
+import { verifyEmail } from '../../../lib/auth';
 
 type Page = 'dashboard' | 'campaigns' | 'vouchers' | 'transactions' | 'profile' | 'overview' | 'draft' | 'howItWorks' | 'campaignDetail' | 'messaging' | 'serviceDetail' | 'selectedServices' | 'createCampaign' | 'manageCampaign' | 'contributors' | 'contributorDetail' | 'campaignSchedule' | 'campaignsHistory' | 'contribute' | 'individualCampaign' | 'groupCampaign' | 'managingCampaigns' | 'helpSupport' | 'saveDraft' | 'selectServices' | 'signup' | 'vendorSignup' | 'otpVerification' | 'signupSuccess' | 'login' | 'forgotPassword' | 'createNewPassword' | 'vendorDashboard' | 'corporateDashboard' | 'selectUserType';
 

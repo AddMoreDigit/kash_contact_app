@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Logo } from '../../components/layout';
-import { registerUser } from '../../lib/auth';
+import { registerUser } from '../../../lib/auth';
 
 type Page = 'dashboard' | 'campaigns' | 'vouchers' | 'transactions' | 'profile' | 'overview' | 'draft' | 'howItWorks' | 'campaignDetail' | 'messaging' | 'serviceDetail' | 'selectedServices' | 'createCampaign' | 'manageCampaign' | 'contributors' | 'contributorDetail' | 'campaignSchedule' | 'campaignsHistory' | 'contribute' | 'individualCampaign' | 'groupCampaign' | 'managingCampaigns' | 'helpSupport' | 'saveDraft' | 'selectServices' | 'signup' | 'vendorSignup' | 'otpVerification' | 'signupSuccess' | 'login' | 'forgotPassword' | 'createNewPassword' | 'selectUserType';
 
