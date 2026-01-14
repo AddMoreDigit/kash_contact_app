@@ -290,6 +290,11 @@ function App() {
       // Auth pages
       case "selectUserType":
         return (
+          <SelectUserTypePage
+            onNavigate={handleNavigate}
+            onSelectUserType={handleSelectUserType}
+          />
+        );
       case "signup":
         return (
           <SignUpPage
@@ -306,8 +311,13 @@ function App() {
           />
         );
       case "vendorSignup":
+        return (
+          <VendorSignUpPage
             onNavigate={handleNavigate}
-            onSignUp={handleSignUp}
+            accountType={accountType}
+            onCreateAccount={handleCreateAccount}
+          />
+        );
           />
         );
       case "vendorSignup":
