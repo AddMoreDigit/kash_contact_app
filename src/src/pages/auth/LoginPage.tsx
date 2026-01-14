@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "../../components/layout";
+import { loginUser } from "../../lib/auth";
 
 type Page =
   | "dashboard"
@@ -58,6 +59,7 @@ export function LoginPage({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const getAccountTypeText = () => {
     switch (accountType) {
@@ -71,8 +73,7 @@ export function LoginPage({
         return "Corporate";
     }
   };
-
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setHasError(false);
 
     if (!email.trim() || !password) {
@@ -87,25 +88,44 @@ export function LoginPage({
       return;
     }
 
-    if (onLogin) {
-      onLogin(email, password, accountType);
-    }
+    setIsLoading(true);
 
-    // Set authentication flag in localStorage
-    localStorage.setItem("isAuthenticated", "true");
-    localStorage.setItem("hasVisitedBefore", "true");
+    try {
+      const result = await loginUser({ email, password });
 
-    toast.success("Login successful!");
-    setTimeout(() => {
-      // Navigate to appropriate dashboard based on account type
-      if (accountType === "vendor") {
-        onNavigate("vendorDashboard");
-      } else if (accountType === "corporate") {
-        onNavigate("corporateDashboard");
+      if (result.success && result.isSignedIn) {
+        // Set authentication flag in localStorage
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("hasVisitedBefore", "true");
+        localStorage.setItem("userEmail", email);
+
+        if (onLogin) {
+          onLogin(email, password, accountType);
+        }
+
+        toast.success("Login successful!");
+        
+        setTimeout(() => {
+          // Navigate to appropriate dashboard based on account type
+          if (accountType === "vendor") {
+            onNavigate("vendorDashboard");
+          } else if (accountType === "corporate") {
+            onNavigate("corporateDashboard");
+          } else {
+            onNavigate("dashboard");
+          }
+        }, 1000);
       } else {
-        onNavigate("dashboard");
+        setHasError(true);
+        toast.error(result.error || "Invalid email or password");
       }
-    }, 1000);
+    } catch (error) {
+      setHasError(true);
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };}, 1000);
   };
 
   const handleBack = () => {
@@ -240,9 +260,10 @@ export function LoginPage({
           {/* Login Button */}
           <button
             onClick={handleLogin}
-            className="w-full bg-[#8363f2] text-white py-3 rounded-md text-base text-center hover:bg-[#7354e1] transition-colors mb-6"
+            disabled={isLoading}
+            className="w-full bg-[#8363f2] text-white py-3 rounded-md text-base text-center hover:bg-[#7354e1] transition-colors mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Log In
+            {isLoading ? 'Logging in...' : 'Log In'}
           </button>
 
           {/* Register Link */}

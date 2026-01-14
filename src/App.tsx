@@ -9,6 +9,7 @@ import { OverviewPage } from "./src/pages/user/OverviewPage";
 import { OverviewPage as CorporateOverviewPage } from "./src/pages/corporate/OverviewPage";
 import { SelectUserTypePage } from "./src/pages/auth/SelectUserTypePage";
 import { SignUpPage } from "./src/pages/auth/SignUpPage";
+import { SignUpFormPage } from "./src/pages/auth/SignUpFormPage";
 import { VendorSignUpPage } from "./src/pages/auth/VendorSignUpPage";
 import { OTPVerificationPage } from "./src/pages/auth/OTPVerificationPage";
 import { SignUpSuccessPage } from "./src/pages/auth/SignUpSuccessPage";
@@ -68,6 +69,7 @@ type Page =
   // Auth pages
   | "selectUserType"
   | "signup"
+  | "signupForm"
   | "vendorSignup"
   | "otpVerification"
   | "signupSuccess"
@@ -245,7 +247,12 @@ function App() {
 
   const handleSignUp = (type: "user" | "vendor" | "corporate") => {
     setAccountType(type);
-    handleNavigate('vendorSignup');
+    handleNavigate('signupForm');
+  };
+
+  const handleSignUpComplete = (email: string) => {
+    setUserEmail(email);
+    localStorage.setItem('pendingVerificationEmail', email);
   };
 
   const handleCreateAccount = (email: string) => {
@@ -283,14 +290,22 @@ function App() {
       // Auth pages
       case "selectUserType":
         return (
-          <SelectUserTypePage
-            onNavigate={handleNavigate}
-            onSelectUserType={handleSelectUserType}
-          />
-        );
       case "signup":
         return (
           <SignUpPage
+            onNavigate={handleNavigate}
+            onSignUp={handleSignUp}
+          />
+        );
+      case "signupForm":
+        return (
+          <SignUpFormPage
+            onNavigate={handleNavigate}
+            accountType={accountType}
+            onSignUpComplete={handleSignUpComplete}
+          />
+        );
+      case "vendorSignup":
             onNavigate={handleNavigate}
             onSignUp={handleSignUp}
           />
