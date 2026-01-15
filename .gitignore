@@ -14,4 +14,4 @@ scripts/aws-artifacts.json
 
 # IDE
 .vscode/settings.json
-.idea/
+.idea/package-lock.json
