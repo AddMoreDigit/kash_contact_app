@@ -50,31 +50,26 @@ export async function registerUser({ email, password, firstName, lastName, accou
 }
 
 /**
- * Verify user email with confirmation code
+ * Confirm user sign up with verification code
  */
-export async function verifyEmail(email: string, code: string) {
+export async function confirmUser(username: string, confirmationCode: string) {
   try {
-    const { isSignUpComplete, nextStep } = await confirmSignUp({
-      username: email,
-      confirmationCode: code,
+    await confirmSignUp({
+      username,
+      confirmationCode,
     });
-
-    return {
-      success: true,
-      isSignUpComplete,
-      nextStep,
-    };
+    return { success: true };
   } catch (error: any) {
     console.error('Error confirming sign up:', error);
     return {
       success: false,
-      error: error.message || 'Failed to verify email',
+      error: error.message || 'Failed to confirm sign up',
     };
   }
 }
 
 /**
- * Sign in existing user
+ * Sign in an existing user with AWS Cognito
  */
 export async function loginUser({ email, password }: SignInParams) {
   try {
@@ -83,9 +78,16 @@ export async function loginUser({ email, password }: SignInParams) {
       password,
     });
 
+    if (isSignedIn) {
+      localStorage.setItem('isAuthenticated', 'true');
+      return {
+        success: true,
+        isSignedIn,
+      };
+    }
+
     return {
-      success: true,
-      isSignedIn,
+      success: false,
       nextStep,
     };
   } catch (error: any) {
@@ -120,101 +122,7 @@ export async function logoutUser() {
 
 async function getApiBaseUrl(): Promise<string> {
   // Prefer environment variable
-  const envUrl = (import.meta as any).env?.kash_contact_app
-
-
-Overview
-
-Access control
-
-Build notifications
-
-Build settings
-
-Custom domains
-
-Custom headers and cache
-
-Environment variables
-
-Firewall
-
-Previews
-
-Rewrites and redirects
-
-Secrets
-
-Access logs
-
-Alarms
-
-Metrics
-
-General settings
-
-Branch settings
-
-IAM roles
-kash_contact_app
-App ID: 
-dazcpvwsgm3ze
-Get to production
-1 of 3 steps complete
-1
-Add a custom domain
-
-Use your own custom domain with free HTTPS to provide a secure, friendly URL for your app.
-
-2
-Enable firewall protections
-
-Web traffic restrictions for Amplify Hosting are offered by AWS Web Application Firewall (WAF).
-
-Connect new branches
-
-Connect another branch from your Git repository to set up multiple environments.
-
-Connected
-Branches
-2
-Search
-Search...
-main
-Deployed
-Production branch
-
-Domain
-
-https://main.dazcpvwsgm3ze.amplifyapp.com
-
-Last deployment
-
-1 day ago
-Last commit
-
-Merge pull request #1 from Add... /
-
-kash_contact_app:main
-
-Dev
-Deployed
-Domain
-
-https://dev.dazcpvwsgm3ze.amplifyapp.com
-
-Last deployment
-
-5 hours ago
-Last commit
-
-Add API URL configuration help... /
-
-kash_contact_app:Dev
-
-
-CloudShell
-FeedbVITE_AUTH_API_URL;
+  const envUrl = (import.meta as any).env?.VITE_AUTH_API_URL;
   if (envUrl) return envUrl as string;
 
   // Fall back to amplify_outputs.json if it contains http_api_url
