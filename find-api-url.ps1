@@ -33,9 +33,9 @@ Write-Host "    .\update-api-url.ps1 -ApiUrl 'https://YOUR_API_ID.execute-api.us
 Write-Host ""
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
 Write-Host ""
-Write-Host "💡 Tip: If you can't find the API Gateway:" -ForegroundColor Yellow
-Write-Host "   Your backend may not be deployed yet. You'll need to:" -ForegroundColor Yellow
-Write-Host "   1. Fix AWS credentials (remove console URL)" -ForegroundColor Yellow
+Write-Host "💡 Tip: If you cannot find the API Gateway:" -ForegroundColor Yellow
+Write-Host "   Your backend may not be deployed yet. You will need to:" -ForegroundColor Yellow
+Write-Host "   1. Fix AWS credentials" -ForegroundColor Yellow
 Write-Host "   2. Run: npx ampx sandbox --once" -ForegroundColor Yellow
 Write-Host "   3. This will create the API and output the invoke URL" -ForegroundColor Yellow
 Write-Host ""
@@ -43,4 +43,3 @@ Write-Host "🔧 To fix AWS credentials:" -ForegroundColor Yellow
 Write-Host "   - Install AWS CLI: winget install Amazon.AWSCLI" -ForegroundColor Gray
 Write-Host "   - Configure: aws configure" -ForegroundColor Gray
 Write-Host "   - Or use SSO: aws configure sso" -ForegroundColor Gray
-Write-Host ""

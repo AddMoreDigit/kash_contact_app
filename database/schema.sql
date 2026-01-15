@@ -397,7 +397,7 @@ CREATE TABLE transactions (
     failed_at TIMESTAMP,
     refunded_at TIMESTAMP,
     
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    VITE_AUTH_API_URL=https://YOUR_ACTUAL_API_ID.execute-api.us-east-1.amazonaws.com
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT check_transaction_amount CHECK (amount > 0)
