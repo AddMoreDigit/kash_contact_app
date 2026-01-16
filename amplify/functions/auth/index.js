@@ -229,24 +229,37 @@ async function resendOtp(data) {
 }
 
 exports.handler = async (event) => {
+  // Parse event - handle both API Gateway and Function URL formats
   const http = event.requestContext?.http || {};
-  const path = http.path || '/';
-  const method = http.method || 'GET';
+  const path = http.path || event.rawPath || event.path || '/';
+  const method = http.method || event.requestContext?.httpMethod || event.httpMethod || 'GET';
+  
+  // ALWAYS return CORS headers for ALL requests
   const headers = getCorsHeaders();
   
+  // Handle OPTIONS preflight FIRST - return immediately
+  if (method === 'OPTIONS') {
+    console.log('OPTIONS preflight request received');
+    return { 
+      statusCode: 204, // Use 204 No Content for OPTIONS
+      headers, 
+      body: '' // Empty body for 204
+    };
+  }
+
   let body = {};
   try {
     body = event.body ? (typeof event.body === 'string' ? JSON.parse(event.body) : event.body) : {};
   } catch (e) {
     console.error('Body parse error:', e);
+    return { 
+      statusCode: 400, 
+      headers, 
+      body: JSON.stringify({ success: false, message: 'Invalid JSON in request body' }) 
+    };
   }
 
   try {
-    // Handle OPTIONS preflight
-    if (method === 'OPTIONS') {
-      return { statusCode: 200, headers, body: JSON.stringify({ ok: true }) };
-    }
-
     let result;
     if (method === 'POST' && path.includes('/auth/register')) {
       result = await registerUser(body);
@@ -260,10 +273,8 @@ exports.handler = async (event) => {
       result = { statusCode: 404, body: JSON.stringify({ success: false, message: 'Not found' }) };
     }
 
-    // Ensure all responses have CORS headers
-    if (!result.headers) {
-      result.headers = headers;
-    }
+    // ALWAYS ensure CORS headers are present
+    result.headers = { ...headers, ...(result.headers || {}) };
     
     return result;
   } catch (err) {
