@@ -4,6 +4,7 @@ node_modules
 .amplify
 amplify_outputs*
 amplifyconfiguration*
+!public/amplify_outputs.json
 
 # Sensitive credentials and secrets (NEVER COMMIT)
 scripts/SECRET_TO_PASTE.json
