@@ -87,7 +87,14 @@ async function registerUser(data) {
     return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Invalid email format' }) };
   }
 
-  const client = await getDbClient();
+  let client;
+  try {
+    client = await getDbClient();
+  } catch (err) {
+    console.error('Database connection error:', err);
+    return { statusCode: 503, headers, body: JSON.stringify({ success: false, message: 'Database connection failed' }) };
+  }
+
   try {
     const exists = await client.query('SELECT id FROM users WHERE email = $1', [email]);
     if (exists.rowCount > 0) {
@@ -108,7 +115,7 @@ async function registerUser(data) {
 
     return { statusCode: 201, headers, body: JSON.stringify({ success: true, message: 'User registered. Verification code sent to email.', data: { userId: res.rows[0].id } }) };
   } catch (err) {
-    console.error('registerUser error', err);
+    console.error('registerUser error:', err);
     try { await client.end(); } catch (e) {}
     return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: err.message }) };
   }
@@ -122,7 +129,14 @@ async function verifyEmail(data) {
     return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Missing email or otpCode' }) };
   }
   
-  const client = await getDbClient();
+  let client;
+  try {
+    client = await getDbClient();
+  } catch (err) {
+    console.error('Database connection error:', err);
+    return { statusCode: 503, headers, body: JSON.stringify({ success: false, message: 'Database connection failed' }) };
+  }
+
   try {
     const res = await client.query('SELECT id, otp_code, otp_expires_at FROM users WHERE email = $1', [email]);
     if (res.rowCount === 0) {
@@ -145,7 +159,7 @@ async function verifyEmail(data) {
     await client.end();
     return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Email verified' }) };
   } catch (err) {
-    console.error('verifyEmail error', err);
+    console.error('verifyEmail error:', err);
     try { await client.end(); } catch (e) {}
     return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: err.message }) };
   }
@@ -159,7 +173,13 @@ async function loginUser(data) {
     return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Missing email or password' }) };
   }
   
-  const client = await getDbClient();
+  let client;
+  try {
+    client = await getDbClient();
+  } catch (err) {
+    console.error('Database connection error:', err);
+    return { statusCode: 503, headers, body: JSON.stringify({ success: false, message: 'Database connection failed' }) };
+  }
   try {
     const res = await client.query('SELECT id, password_hash, email_verified, user_type FROM users WHERE email = $1', [email]);
     if (res.rowCount === 0) {
@@ -186,7 +206,7 @@ async function loginUser(data) {
     
     return { statusCode: 200, headers, body: JSON.stringify({ success: true, data: { token } }) };
   } catch (err) {
-    console.error('loginUser error', err);
+    console.error('loginUser error:', err);
     try { await client.end(); } catch (e) {}
     return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: err.message }) };
   }
@@ -200,7 +220,13 @@ async function resendOtp(data) {
     return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Missing email' }) };
   }
   
-  const client = await getDbClient();
+  let client;
+  try {
+    client = await getDbClient();
+  } catch (err) {
+    console.error('Database connection error:', err);
+    return { statusCode: 503, headers, body: JSON.stringify({ success: false, message: 'Database connection failed' }) };
+  }
   try {
     const res = await client.query('SELECT id, email_verified FROM users WHERE email = $1', [email]);
     if (res.rowCount === 0) {
@@ -222,7 +248,7 @@ async function resendOtp(data) {
     
     return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Verification code resent' }) };
   } catch (err) {
-    console.error('resendOtp error', err);
+    console.error('resendOtp error:', err);
     try { await client.end(); } catch (e) {}
     return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: err.message }) };
   }
