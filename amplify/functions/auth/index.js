@@ -24,7 +24,10 @@ async function getDbSecret() {
   if (dbSecretCache) return dbSecretCache;
   const sm = new SecretsManagerClient({ region: REGION });
   const cmd = new GetSecretValueCommand({ SecretId: DB_SECRET_ARN });
-  const res = await sm.send(cmd);
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Secrets Manager timeout (10s)')), 10000)
+  );
+  const res = await Promise.race([sm.send(cmd), timeoutPromise]);
   dbSecretCache = JSON.parse(res.SecretString);
   return dbSecretCache;
 }
@@ -33,7 +36,10 @@ async function getJwtSecret() {
   if (jwtSecretCache) return jwtSecretCache;
   const sm = new SecretsManagerClient({ region: REGION });
   const cmd = new GetSecretValueCommand({ SecretId: JWT_SECRET_ARN });
-  const res = await sm.send(cmd);
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Secrets Manager timeout (10s)')), 10000)
+  );
+  const res = await Promise.race([sm.send(cmd), timeoutPromise]);
   const secret = JSON.parse(res.SecretString);
   jwtSecretCache = secret.JWT_SECRET;
   return jwtSecretCache;
@@ -41,7 +47,7 @@ async function getJwtSecret() {
 
 async function getDbClient() {
   const secret = await getDbSecret();
-  const useSsl = secret.ssl !== false; // default to SSL unless explicitly disabled
+  const useSsl = secret.ssl !== false;
   const client = new Client({
     host: secret.host,
     port: secret.port || 5432,
@@ -49,8 +55,15 @@ async function getDbClient() {
     password: secret.password,
     database: secret.dbname || secret.database,
     ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+    connectionTimeoutMillis: 10000,
+    statement_timeout: 10000,
   });
-  await client.connect();
+  
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('DB connection timeout (15s)')), 15000)
+  );
+  
+  await Promise.race([client.connect(), timeoutPromise]);
   return client;
 }
 
