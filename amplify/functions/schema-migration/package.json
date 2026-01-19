@@ -1,0 +1,10 @@
+{
+  "name": "schema-migration",
+  "version": "1.0.0",
+  "description": "One-time Lambda to run schema migration",
+  "main": "index.js",
+  "dependencies": {
+    "pg": "^8.11.0",
+    "@aws-sdk/client-secrets-manager": "^3.400.0"
+  }
+}
