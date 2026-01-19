@@ -201,7 +201,7 @@ exports.handler = async (event) => {
   try { body = event.body ? JSON.parse(event.body) : {}; } catch (e) { /* ignore parse error */ }
 
   try {
-    console.log(`Handler: ${method} ${path}`);
+    console.log(`[START] ${method} ${path}`);
     
     if (method === 'OPTIONS') {
       return { statusCode: 204, headers, body: '' };
@@ -209,23 +209,31 @@ exports.handler = async (event) => {
     
     let response;
     if (method === 'POST' && path.endsWith('/auth/register')) {
+      console.log('[AUTH] registerUser called');
       response = await registerUser(body);
+      console.log('[AUTH] registerUser returned:', response.statusCode);
     } else if (method === 'POST' && path.endsWith('/auth/verify-email')) {
+      console.log('[AUTH] verifyEmail called');
       response = await verifyEmail(body);
+      console.log('[AUTH] verifyEmail returned:', response.statusCode);
     } else if (method === 'POST' && path.endsWith('/auth/login')) {
+      console.log('[AUTH] loginUser called');
       response = await loginUser(body);
+      console.log('[AUTH] loginUser returned:', response.statusCode);
     } else {
+      console.log('[ROUTE] Not found');
       response = { statusCode: 404, body: JSON.stringify({ success: false, message: 'Not found' }) };
     }
     
-    console.log(`Response: ${response.statusCode}`);
+    console.log('[SUCCESS] Returning:', response.statusCode);
     return {
       statusCode: response.statusCode || 500,
       headers,
       body: typeof response.body === 'string' ? response.body : JSON.stringify(response.body || { success: false, message: 'No response' })
     };
   } catch (err) {
-    console.error('handler error:', err.message, err.stack);
+    console.error('[ERROR]', err.message);
+    console.error('[STACK]', err.stack);
     return {
       statusCode: 500,
       headers,
