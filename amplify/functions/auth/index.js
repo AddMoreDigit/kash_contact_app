@@ -25,17 +25,30 @@ exports.handler = async (event) => {
       const secretRes = await sm.send(new GetSecretValueCommand({ SecretId: DB_SECRET_ARN }));
       const dbSecret = JSON.parse(secretRes.SecretString);
       
+      const dbHost = dbSecret.host;
+      const dbPort = dbSecret.port || 5432;
+      const dbUser = dbSecret.username || dbSecret.user;
+      const dbName = dbSecret.dbname || dbSecret.database;
+
+      console.log(`[MIGRATION] Connecting to ${dbHost}:${dbPort} as ${dbUser}, db=${dbName}`);
+
       const client = new Client({
-        host: dbSecret.host,
-        port: dbSecret.port || 5432,
-        user: dbSecret.username || dbSecret.user,
+        host: dbHost,
+        port: dbPort,
+        user: dbUser,
         password: dbSecret.password,
-        database: dbSecret.dbname || dbSecret.database,
+        database: dbName,
         ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: 10000,
       });
       
-      await client.connect();
-      console.log('[MIGRATION] DB connected');
+      try {
+        await client.connect();
+        console.log('[MIGRATION] DB connected');
+      } catch (connErr) {
+        console.error('[MIGRATION] DB connection failed:', connErr && connErr.stack ? connErr.stack : connErr);
+        throw connErr;
+      }
       
       const schemaSql = `
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -135,6 +148,7 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       } else {
         try {
           // Get DB secret
+          console.log('[DB] Fetching secret...');
           const sm = new SecretsManagerClient({ region: REGION });
           const dbSecretRes = await sm.send(new GetSecretValueCommand({ SecretId: DB_SECRET_ARN }));
           const dbSecret = JSON.parse(dbSecretRes.SecretString);
@@ -148,8 +162,10 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
             password: dbSecret.password,
             database: dbSecret.dbname || dbSecret.database,
             ssl: { rejectUnauthorized: false },
+            connectionTimeoutMillis: 10000, // fail fast on connectivity issues
           });
           
+          console.log('[DB] Connecting...');
           await client.connect();
           console.log('[DB] Connected');
 
@@ -191,8 +207,8 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
             response = { statusCode: 201, body: JSON.stringify({ success: true, message: 'User registered. Check email for verification code.' }) };
           }
         } catch (err) {
-          console.error('[REGISTER ERROR]', err.message);
-          response = { statusCode: 500, body: JSON.stringify({ success: false, message: err.message }) };
+          console.error('[REGISTER ERROR]', err && err.stack ? err.stack : err);
+          response = { statusCode: 500, body: JSON.stringify({ success: false, message: err && err.message ? err.message : 'Registration failed; see logs' }) };
         }
       }
     } else {
