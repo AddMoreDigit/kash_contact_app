@@ -22,8 +22,10 @@ exports.handler = async (event) => {
       const DB_SECRET_ARN = process.env.DB_SECRET_ARN;
       
       const sm = new SecretsManagerClient({ region: REGION });
+      console.log('[MIGRATION] Fetching DB secret...');
       const secretRes = await sm.send(new GetSecretValueCommand({ SecretId: DB_SECRET_ARN }));
       const dbSecret = JSON.parse(secretRes.SecretString);
+      console.log('[MIGRATION] Secret retrieved');
       
       const dbHost = dbSecret.host;
       const dbPort = dbSecret.port || 5432;
