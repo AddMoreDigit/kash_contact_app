@@ -190,6 +190,12 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
             
             await client.end();
 
+            // Debug mode: log OTP to CloudWatch if DEBUG_LOG_OTP is set
+            const DEBUG_LOG_OTP = process.env.DEBUG_LOG_OTP === 'true';
+            if (DEBUG_LOG_OTP) {
+              console.log(`[DEBUG] OTP for ${email}: ${otp}`);
+            }
+
             // Send email (best effort, don't fail if it fails)
             try {
               const ses = new SESClient({ region: REGION });
@@ -204,6 +210,9 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
               console.log('[EMAIL] Sent to', email);
             } catch (emailErr) {
               console.error('[EMAIL] Failed:', emailErr.message);
+              if (DEBUG_LOG_OTP) {
+                console.log('[DEBUG] Email send failed, but OTP is logged above for testing');
+              }
             }
 
             response = { statusCode: 201, body: JSON.stringify({ success: true, message: 'User registered. Check email for verification code.' }) };
